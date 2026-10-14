@@ -1,0 +1,39 @@
+# Local environment and credentials. Keep the committed example template.
+.env
+.env.*
+!.env.example
+
+# Python environments, caches, and test output.
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.pytest-tmp/
+.coverage
+htmlcov/
+
+# Local databases, logs, uploads, scan scratch data, and generated reports.
+*.db
+*.sqlite
+*.sqlite3
+*.log
+instance/
+uploads/
+scan-tmp/
+tmp/
+temp/
+reports/
+cloudguard-archive/
+
+# Private keys and exported certificates.
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Build output.
+build/
+dist/

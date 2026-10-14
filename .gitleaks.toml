@@ -1,0 +1,26 @@
+title = "SecretShield Pro detection rules"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "secretshield-demo-key"
+description = "SecretShield fabricated demonstration key"
+regex = '''sspro_[A-Za-z0-9]{32}'''
+tags = ["secret", "demo"]
+
+[[rules]]
+# Gitleaks' generic rule suppresses common placeholders such as values containing
+# "fake" or "test". Keep that behavior for generic assignments; explicitly
+# assigned AWS_SECRET_ACCESS_KEY values are still surfaced for review, including
+# fabricated examples. This detects a pattern and does not validate credentials.
+id = "aws-secret-access-key-assignment"
+description = "AWS_SECRET_ACCESS_KEY assignment contains a credential-like value"
+regex = '''(?i)\bAWS_SECRET_ACCESS_KEY\b[ \t]*[:=][ \t]*[\"']([A-Za-z0-9/+=_-]{16,128})[\"']'''
+secretGroup = 1
+keywords = ["aws_secret_access_key"]
+tags = ["key", "AWS", "secret"]
+
+  [[rules.allowlists]]
+  description = "The AWS assignment values in these files are fabricated scanner regression fixtures."
+  paths = ['''(^|/)tests/(test_gitleaks_integration|test_scan_api|test_scanner)\.py$''']

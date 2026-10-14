@@ -1,0 +1,43 @@
+services:
+  web:
+    build: .
+    env_file: .env
+    command: ["sh", "-c", "flask --app secretshield:create_app db upgrade && exec gunicorn --bind=0.0.0.0:5000 --workers=2 --timeout=120 'secretshield:create_app()'"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://secretshield:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/secretshield
+      MAX_SCAN_BYTES: ${MAX_SCAN_BYTES:-20971520}
+      MAX_ARCHIVE_FILES: ${MAX_ARCHIVE_FILES:-1000}
+      SCAN_TIMEOUT_SECONDS: ${SCAN_TIMEOUT_SECONDS:-90}
+      SCAN_TEMP_DIR: /tmp/secretshield
+    ports:
+      - "127.0.0.1:5000:5000"
+    volumes:
+      - scan-tmp:/tmp/secretshield
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/healthz', timeout=2)"]
+      interval: 20s
+      timeout: 3s
+      retries: 3
+
+  db:
+    image: postgres:16.9-alpine
+    environment:
+      POSTGRES_DB: secretshield
+      POSTGRES_USER: secretshield
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U secretshield -d secretshield"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  scan-tmp:
