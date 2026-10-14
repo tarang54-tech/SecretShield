@@ -13,11 +13,7 @@ services:
     plan: free
     region: singapore
     healthCheckPath: /healthz
-    dockerCommand: >-
-      sh -c "flask --app secretshield:create_app db upgrade &&
-      flask --app secretshield:create_app bootstrap-admin &&
-      exec gunicorn --bind=0.0.0.0:$PORT --workers=2 --timeout=120
-      'secretshield:create_app()'"
+    dockerCommand: /usr/local/bin/render-start
     envVars:
       - key: SECRET_KEY
         generateValue: true

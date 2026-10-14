@@ -10,7 +10,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY secretshield ./secretshield
 COPY .gitleaks.toml ./.gitleaks.toml
 COPY migrations ./migrations
-RUN mkdir -p /app/instance /tmp/secretshield && chown -R secretshield:secretshield /app /tmp/secretshield
+COPY scripts/render-start.sh /usr/local/bin/render-start
+RUN chmod 755 /usr/local/bin/render-start \
+    && mkdir -p /app/instance /tmp/secretshield \
+    && chown -R secretshield:secretshield /app /tmp/secretshield
 USER secretshield
 EXPOSE 5000
 CMD ["gunicorn", "--bind=0.0.0.0:5000", "--workers=2", "--timeout=120", "secretshield:create_app()"]
