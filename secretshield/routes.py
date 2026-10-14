@@ -90,6 +90,29 @@ def list_scans():
     return jsonify(scans=[serialize_scan(item) for item in items])
 
 
+@scans.post("/demo/reset")
+@login_required
+def reset_demo_history():
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict) or body.get("confirm") is not True:
+        return jsonify(error="Explicit confirmation is required to clear dashboard history."), 400
+
+    user_id = current_user.id
+    scan_ids = [row[0] for row in db.session.query(Scan.id).filter_by(user_id=user_id).all()]
+    finding_count = Finding.query.filter(Finding.scan_id.in_(scan_ids)).count() if scan_ids else 0
+    incident_count = Incident.query.filter_by(user_id=user_id).count()
+    scan_count = len(scan_ids)
+
+    IncidentEvent.query.filter_by(user_id=user_id).delete(synchronize_session=False)
+    Incident.query.filter_by(user_id=user_id).delete(synchronize_session=False)
+    if scan_ids:
+        Finding.query.filter(Finding.scan_id.in_(scan_ids)).delete(synchronize_session=False)
+        Scan.query.filter(Scan.id.in_(scan_ids)).delete(synchronize_session=False)
+    db.session.commit()
+    audit("dashboard_history_cleared", "user", user_id)
+    return jsonify(cleared={"scans": scan_count, "findings": finding_count, "incidents": incident_count})
+
+
 @scans.post("/scans")
 @login_required
 def create_scan():

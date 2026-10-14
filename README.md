@@ -19,6 +19,7 @@ The project is a college-scale security tool. It detects patterns; it does not p
 - Findings store a keyed fingerprint and redacted metadata: rule, severity, source path, line, status, and detection time.
 - Cross-scan verification resolves a finding only when a later successful scan of the same named source no longer contains its fingerprint.
 - Incident workflow with guarded status transitions, remediation notes, event timeline, and an audit trail for scans and triage actions.
+- A confirmed dashboard-history reset for the signed-in account clears demo scans, findings, and incidents while retaining the account and audit trail.
 - User-scoped scan/findings APIs and redacted CSV export.
 - A configurable GitHub Actions gate scans Git history and blocks at a selected severity. The pipeline prints counts only; it doesn’t upload a raw scanner report.
 - A fabricated-secret ZIP generator for demonstrations.

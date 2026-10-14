@@ -50,6 +50,33 @@ if (scanForm) {
   });
 }
 
+const clearHistoryButton = document.getElementById('clearHistory');
+if (clearHistoryButton) {
+  clearHistoryButton.addEventListener('click', async () => {
+    const confirmed = window.confirm(
+      'Clear all saved scans, findings, incidents, and incident timelines for this account? This cannot be undone.'
+    );
+    if (!confirmed) return;
+
+    const message = document.getElementById('clearHistoryMessage');
+    clearHistoryButton.disabled = true;
+    message.textContent = 'Clearing saved history…';
+    try {
+      const response = await fetch('/api/demo/reset', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrf, Accept: 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm: true }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Could not clear saved history.');
+      location.reload();
+    } catch (error) {
+      message.textContent = error.message || 'Could not reach SecretShield. Try again.';
+      clearHistoryButton.disabled = false;
+    }
+  });
+}
+
 function addCell(row, value) {
   const cell = document.createElement('td');
   cell.textContent = value;
