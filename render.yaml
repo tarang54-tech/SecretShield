@@ -1,0 +1,41 @@
+databases:
+  - name: secretshield-db
+    plan: free
+    region: singapore
+    databaseName: secretshield
+    user: secretshield
+    postgresMajorVersion: "16"
+
+services:
+  - type: web
+    name: secretshield
+    runtime: docker
+    plan: free
+    region: singapore
+    healthCheckPath: /healthz
+    dockerCommand: >-
+      sh -c "flask --app secretshield:create_app db upgrade &&
+      flask --app secretshield:create_app bootstrap-admin &&
+      exec gunicorn --bind=0.0.0.0:$PORT --workers=2 --timeout=120
+      'secretshield:create_app()'"
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: COOKIE_SECURE
+        value: "1"
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: secretshield-db
+          property: connectionString
+      - key: SCAN_TEMP_DIR
+        value: /tmp/secretshield
+      - key: MAX_SCAN_BYTES
+        value: "20971520"
+      - key: MAX_ARCHIVE_FILES
+        value: "1000"
+      - key: SCAN_TIMEOUT_SECONDS
+        value: "90"

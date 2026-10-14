@@ -21,9 +21,14 @@ def create_app(test_config=None):
     secret_key = os.getenv("SECRET_KEY")
     if not secret_key and not test_config:
         raise RuntimeError("Set SECRET_KEY in the environment before starting SecretShield.")
+    database_url = os.getenv("DATABASE_URL", "sqlite:///secretshield.db")
+    # Render Postgres provides the generic URL scheme. This project installs
+    # Psycopg 3, so make SQLAlchemy select that driver explicitly.
+    if database_url.startswith("postgresql://"):
+        database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
     app.config.from_mapping(
         SECRET_KEY=secret_key or "test-only-key",
-        SQLALCHEMY_DATABASE_URI=os.getenv("DATABASE_URL", "sqlite:///secretshield.db"),
+        SQLALCHEMY_DATABASE_URI=database_url,
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         MAX_CONTENT_LENGTH=int(os.getenv("MAX_SCAN_BYTES", "20971520")) + 1024 * 1024,
         MAX_SCAN_BYTES=int(os.getenv("MAX_SCAN_BYTES", "20971520")),
@@ -103,5 +108,25 @@ def create_app(test_config=None):
         db.session.add(user)
         db.session.commit()
         click.echo("Administrator account created.")
+
+    @app.cli.command("bootstrap-admin")
+    def bootstrap_admin():
+        """Create the first administrator from deployment environment values."""
+        import click
+        if User.query.first():
+            click.echo("An administrator is already initialized.")
+            return
+        username = os.getenv("ADMIN_USERNAME")
+        password = os.getenv("ADMIN_PASSWORD")
+        if not username or not password or len(password) < 12:
+            raise click.ClickException(
+                "For first-time setup, set ADMIN_USERNAME and an ADMIN_PASSWORD "
+                "with at least 12 characters."
+            )
+        user = User(username=username)
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+        click.echo("Initial administrator account created.")
 
     return app

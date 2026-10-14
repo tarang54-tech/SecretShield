@@ -1,5 +1,6 @@
 from secretshield.extensions import db
 from secretshield.models import User
+from secretshield import create_app
 
 
 def test_dashboard_requires_login(client):
@@ -27,6 +28,22 @@ def test_password_is_hashed(app):
         user = User.query.filter_by(username="tester").one()
         assert "correct horse battery staple" not in user.password_hash
         assert user.check_password("correct horse battery staple")
+
+
+def test_render_postgres_url_selects_psycopg3(monkeypatch):
+    monkeypatch.setenv("DATABASE_URL", "postgresql://user:password@db.example:5432/app")
+    app = create_app({"TESTING": True})
+    assert app.config["SQLALCHEMY_DATABASE_URI"] == (
+        "postgresql+psycopg://user:password@db.example:5432/app"
+    )
+
+
+def test_bootstrap_admin_is_idempotent_when_account_exists(app, monkeypatch):
+    monkeypatch.delenv("ADMIN_USERNAME", raising=False)
+    monkeypatch.delenv("ADMIN_PASSWORD", raising=False)
+    result = app.test_cli_runner().invoke(args=["bootstrap-admin"])
+    assert result.exit_code == 0
+    assert "already initialized" in result.output
 
 
 def test_state_change_rejects_missing_csrf():

@@ -72,6 +72,12 @@ docker compose exec web flask --app secretshield:create_app create-admin
 
 Open [http://localhost:5000](http://localhost:5000) and sign in with the account you just created. Stop with `docker compose down`; database data remains in its named volume. Remove demo data permanently with `docker compose down -v`.
 
+## Deploy a teacher demo on Render
+
+The repository includes a `render.yaml` Blueprint for a Docker web service and PostgreSQL database in Singapore. In Render, create a new Blueprint from `tarang54-tech/SecretShield`, review the two resources, and set the prompted `ADMIN_USERNAME` plus a unique `ADMIN_PASSWORD` of at least 12 characters. Render generates `SECRET_KEY`; no credentials belong in GitHub. After the first successful deploy, remove `ADMIN_PASSWORD` from the service environment and redeploy; the initial admin remains in PostgreSQL.
+
+This uses Render's free plans for a short demo. Free web services sleep after 15 minutes of inactivity, so the first visit may take about a minute. Free PostgreSQL expires after 30 days and the free service has no shell access. Treat this as a demo only, use fabricated scan files, and do not upload real credentials or sensitive source code.
+
 ## Local development and tests
 
 Python 3.11+ is required. For local runs, install requirements, set a development `SECRET_KEY`, use SQLite, and install Gitleaks on PATH:
